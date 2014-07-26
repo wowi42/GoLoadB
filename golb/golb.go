@@ -32,7 +32,7 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	}
 	limit := 0
 	for limit < libgolb.NumberBack {
-		resp, _ := http.NewRequest(req.Method, "http://"+server+req.RequestURI, nil)
+		resp, _ := http.NewRequest(req.Method, "http://"+server+"/", nil)
 		for k, v := range req.Header {
 			resp.Header[k] = v
 		}
