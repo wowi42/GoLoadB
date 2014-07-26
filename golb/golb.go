@@ -24,6 +24,7 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	var secondResp *http.Response
 	var errsp error
 
+	defer secondResp.Body.Close()
 	serv := strings.Split(req.RemoteAddr, ":") // extract just IP without port
 	libgolb.Log("misc", "Access From :"+serv[0])
 	server, errGS := libgolb.RadixGetString(libgolb.LBClient, serv[0])
@@ -54,7 +55,6 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	for k, v := range secondResp.Header {
 		w.Header().Add(k, strings.Join(v, ""))
 	}
-	defer secondResp.Body.Close()
 	w.Header().Set("Status", "200")
 	io.Copy(w, secondResp.Body)
 	libgolb.RadixSet(libgolb.LBClient, serv[0], server)
