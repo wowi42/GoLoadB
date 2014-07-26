@@ -31,6 +31,11 @@ func RadixSet(c *redis.Client, key, value string) error {
 	return r.Err
 }
 
+func RadixExpire(c *redis.Client, key, ttl string) error {
+	r := c.Cmd("EXPIRE", key, ttl)
+	return r.Err
+}
+
 func RadixUpdate(c *redis.Client, key, value string) error {
 	r := c.Cmd("set", key, value)
 	return r.Err

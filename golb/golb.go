@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"io"
+	"strconv"
 )
 func getServer() (server string) {
 	server = libgolb.Conf.BackServers[libgolb.RoundRobin]
@@ -21,7 +22,8 @@ func getServer() (server string) {
 func golbGet(w http.ResponseWriter, req *http.Request) {
 	var secondResp *http.Response
 	var errsp error
-	serv := strings.Split(req.RemoteAddr, ":")
+	
+	serv := strings.Split(req.RemoteAddr, ":") // extract just IP without port
 	libgolb.Log("misc", "Access From :"+serv[0])
 	server, errGS := libgolb.RadixGetString(libgolb.LBClient, serv[0])
 	if errGS != nil {
@@ -55,6 +57,7 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	libgolb.RadixSet(libgolb.LBClient, serv[0], server)
 	libgolb.Log("ok", "Answer From :"+serv[0])
 	//TTL
+	libgolb.RadixExpire(libgolb.LBClient, serv[0], strconv.Itoa(libgolb.Conf.TTL))
 	libgolb.LogW3C(w, req, false)
 }
 
