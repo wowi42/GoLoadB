@@ -38,7 +38,6 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 		}
 		resp.Header.Set("X-Forwarded-For", req.RemoteAddr)
 		secondResp, errsp = http.DefaultClient.Do(resp)
-		defer secondResp.Body.Close()
 		if errsp != nil {
 			libgolb.Log("error", "Connection with the HTTP file server failed: "+errsp.Error())
 			server = getServer()
@@ -55,6 +54,7 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	for k, v := range secondResp.Header {
 		w.Header().Add(k, strings.Join(v, ""))
 	}
+	defer secondResp.Body.Close()
 	w.Header().Set("Status", "200")
 	io.Copy(w, secondResp.Body)
 	libgolb.RadixSet(libgolb.LBClient, serv[0], server)
