@@ -23,14 +23,15 @@ type HttpServer struct {
 }
 
 type Configuration struct {
-	Name         string
-	Log          LogFile
-	RedisLB      RedisServer
-	Server       HttpServer
-	BackServers  []string
-	LogColor     bool
-	TTL          int
+	Name        string
+	Log         LogFile
+	RedisLB     RedisServer
+	Server      HttpServer
+	BackServers []string
+	LogColor    bool
+	TTL         int
 }
+
 var RoundRobin int
 var NumberBack int
 var Conf Configuration

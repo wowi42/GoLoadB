@@ -4,12 +4,13 @@ import (
 	"../libgolb"
 	"github.com/docopt/docopt-go"
 	"github.com/gorilla/mux"
+	"io"
 	"net/http"
 	"os"
-	"strings"
-	"io"
 	"strconv"
+	"strings"
 )
+
 func getServer() (server string) {
 	server = libgolb.Conf.BackServers[libgolb.RoundRobin]
 	libgolb.RoundRobin++
@@ -22,7 +23,7 @@ func getServer() (server string) {
 func golbGet(w http.ResponseWriter, req *http.Request) {
 	var secondResp *http.Response
 	var errsp error
-	
+
 	serv := strings.Split(req.RemoteAddr, ":") // extract just IP without port
 	libgolb.Log("misc", "Access From :"+serv[0])
 	server, errGS := libgolb.RadixGetString(libgolb.LBClient, serv[0])

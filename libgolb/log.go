@@ -3,11 +3,11 @@ package libgolb
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
-	"net/http"
 )
 
 // ANSIC       = "Mon Jan _2 15:04:05 2006"
@@ -100,9 +100,9 @@ func LogW3C(w http.ResponseWriter, req *http.Request, before bool) {
 	// Remotehost rfc931 authuser [date] "request" status bytes
 	var msg string
 	if before == true {
-		msg = req.RemoteAddr + " [" + time.Now().Format(layout) + "] \"" + req.Method + "\" " + req.Header.Get("status") + " " +  req.Header.Get("Content-Length") + "\n"
+		msg = req.RemoteAddr + " [" + time.Now().Format(layout) + "] \"" + req.Method + "\" " + req.Header.Get("status") + " " + req.Header.Get("Content-Length") + "\n"
 	} else {
-		msg = req.RemoteAddr + " - [" + time.Now().Format(layout) + "] \"" + req.Method + " " + req.RequestURI + " " + req.Proto  + "\" " + w.Header().Get("status") + " " +  w.Header().Get("Content-Length") + "\n"
+		msg = req.RemoteAddr + " - [" + time.Now().Format(layout) + "] \"" + req.Method + " " + req.RequestURI + " " + req.Proto + "\" " + w.Header().Get("status") + " " + w.Header().Get("Content-Length") + "\n"
 	}
 	// Write log
 	fileToWrite := Conf.Log.Folder + Conf.Name + ".w3c.log"

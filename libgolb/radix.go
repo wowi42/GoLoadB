@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	LBClient    *redis.Client
+	LBClient *redis.Client
 )
 
 func ConnectToRedis() (err error) {
@@ -57,11 +57,11 @@ func RadixList(c *redis.Client) (s []string, err error) {
 }
 
 func SetMutex(c *redis.Client, key string) (result int, err error) {
-	result, err = c.Cmd("SETNX", "lock:" + key, key).Int()
+	result, err = c.Cmd("SETNX", "lock:"+key, key).Int()
 	return
 }
 
 func DelMutex(c *redis.Client, key string) (err error) {
-	_, err = c.Cmd("SETNX", "lock:" + key).Int()
+	_, err = c.Cmd("SETNX", "lock:"+key).Int()
 	return
 }
