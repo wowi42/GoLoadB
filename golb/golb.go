@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"strings"
 )
-var origins = map[string]string{}
+
+var origins = map[string]string{} // map of originip/backend
+
 func getServer() (server string) {
 	server = libgolb.Conf.BackServers[libgolb.RoundRobin]
 	libgolb.RoundRobin++
@@ -23,15 +25,16 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	var errsp error
 
 	
-	//serv := strings.Split(req.RemoteAddr, ":") // extract just IP without port
-	origin := req.RemoteAddr
+	serv := strings.Split(req.RemoteAddr, ":") // extract just IP without port, it can be a good idea on a limited system !!!
+	//origin := req.RemoteAddr // here is the best solution, but use a lot of memory !!!
+	origin := serv[0]
 	libgolb.Log("misc", "Access From :"+origin)
 	server, errGS := origins[origin]
 	if errGS == false {
 		server = getServer()
 	}
 	limit := 0
-	for limit < libgolb.NumberBack {
+	for limit < libgolb.NumberBack { // this for is used to check all servers and select the first one available
 		resp, _ := http.NewRequest(req.Method, "http://"+server+"/", nil)
 		for k, v := range req.Header {
 			resp.Header[k] = v
@@ -43,16 +46,16 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 			server = getServer()
 			limit++
 		} else {
-			defer secondResp.Body.Close()
+			defer secondResp.Body.Close() // don't forget to close the Body !!!
 			break
 		}
 	}
-	if limit >= libgolb.NumberBack {
+	if limit >= libgolb.NumberBack { // No Backend
 		libgolb.HttpResponse(w, 500, "Internal server error\n")
 		libgolb.Log("error", "No Backend Server avalaible")
 		return
 	}
-	for k, v := range secondResp.Header {
+	for k, v := range secondResp.Header { // Copy Header
 		w.Header().Add(k, strings.Join(v, ""))
 	}
 	w.Header().Set("Status", "200")
