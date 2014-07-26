@@ -76,7 +76,7 @@ func parseArgument(configuration string) {
 
 	// Router
 	rtr := mux.NewRouter()
-	rtr.HandleFunc(`/{URI}`, golbGet).Methods("GET")
+	rtr.HandleFunc("/", golbGet).Methods("GET")
 	http.Handle("/", rtr)
 
 	// Listening
