@@ -7,10 +7,10 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strconv"
+//	"strconv"
 	"strings"
 )
-
+var origins = map[string]string{}
 func getServer() (server string) {
 	server = libgolb.Conf.BackServers[libgolb.RoundRobin]
 	libgolb.RoundRobin++
@@ -28,8 +28,10 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	//serv := strings.Split(req.RemoteAddr, ":") // extract just IP without port
 	origin := req.RemoteAddr
 	libgolb.Log("misc", "Access From :"+origin)
-	server, errGS := libgolb.RadixGetString(libgolb.LBClient, origin)
-	if errGS != nil {
+	//	server, errGS := libgolb.RadixGetString(libgolb.LBClient, origin)
+	server, errGS := origins[origin]
+//	if errGS != nil {
+	if errGS == false {
 		server = getServer()
 	}
 	limit := 0
@@ -59,10 +61,11 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Header().Set("Status", "200")
 	io.Copy(w, secondResp.Body)
-	libgolb.RadixSet(libgolb.LBClient, origin, server)
+	//libgolb.RadixSet(libgolb.LBClient, origin, server)
+	origins[origin] = server
 	libgolb.Log("ok", "Answer From :"+origin)
 	//TTL
-	libgolb.RadixExpire(libgolb.LBClient, origin, strconv.Itoa(libgolb.Conf.TTL))
+	//	libgolb.RadixExpire(libgolb.LBClient, origin, strconv.Itoa(libgolb.Conf.TTL))
 	libgolb.LogW3C(w, req, false)
 }
 
