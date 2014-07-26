@@ -30,6 +30,7 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	origin := serv[0]
 	libgolb.Log("misc", "Access From :"+origin)
 	server, errGS := origins[origin]
+	primaryServer := server
 	if errGS == false {
 		server = getServer()
 	}
@@ -60,7 +61,9 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Header().Set("Status", "200")
 	io.Copy(w, secondResp.Body)
-	origins[origin] = server
+	if primaryServer != server {
+		origins[origin] = server
+	}
 	libgolb.Log("ok", "Answer From :"+origin)
 	libgolb.LogW3C(w, req, false)
 }
