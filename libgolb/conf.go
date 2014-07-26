@@ -11,11 +11,6 @@ type LogFile struct {
 	Folder string
 }
 
-type RedisServer struct {
-	Hostname string
-	Port     string
-	Database int
-}
 
 type HttpServer struct {
 	Hostname string
@@ -25,11 +20,9 @@ type HttpServer struct {
 type Configuration struct {
 	Name        string
 	Log         LogFile
-	RedisLB     RedisServer
 	Server      HttpServer
 	BackServers []string
 	LogColor    bool
-	TTL         int
 }
 
 var RoundRobin int

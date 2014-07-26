@@ -1,7 +1,7 @@
 GoLB
 ====
 
-GoLB is a Go Sticky Round Robin Load balancer, which work with Redis.
+GoLB is a Go Sticky Round Robin Load balancer.
 
 ```
 {
@@ -14,16 +14,10 @@ GoLB is a Go Sticky Round Robin Load balancer, which work with Redis.
     },
     "LogColor": true,
     "Name": "edge42",
-    "RedisLB": {
-        "Database": 3,
-        "Hostname": "127.0.0.1",
-        "Port": "6379"
-    },
     "Server": {
         "Hostname": "127.0.0.1",
         "Port": "8080"
-    },
-    "TTL": 3600
+    }
 }
 
 ```

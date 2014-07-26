@@ -6,8 +6,6 @@ import (
 	"github.com/gorilla/mux"
 	"io"
 	"net/http"
-	"os"
-//	"strconv"
 	"strings"
 )
 var origins = map[string]string{}
@@ -28,9 +26,7 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	//serv := strings.Split(req.RemoteAddr, ":") // extract just IP without port
 	origin := req.RemoteAddr
 	libgolb.Log("misc", "Access From :"+origin)
-	//	server, errGS := libgolb.RadixGetString(libgolb.LBClient, origin)
 	server, errGS := origins[origin]
-//	if errGS != nil {
 	if errGS == false {
 		server = getServer()
 	}
@@ -61,11 +57,8 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Header().Set("Status", "200")
 	io.Copy(w, secondResp.Body)
-	//libgolb.RadixSet(libgolb.LBClient, origin, server)
 	origins[origin] = server
 	libgolb.Log("ok", "Answer From :"+origin)
-	//TTL
-	//	libgolb.RadixExpire(libgolb.LBClient, origin, strconv.Itoa(libgolb.Conf.TTL))
 	libgolb.LogW3C(w, req, false)
 }
 
@@ -73,13 +66,6 @@ func parseArgument(configuration string) {
 
 	// Load configuration
 	libgolb.ConfLoad(configuration)
-	// Check Redis connection
-	redis := libgolb.ConnectToRedis()
-	if redis != nil {
-		libgolb.Log("error", "Redis connection failed")
-		os.Exit(1)
-	}
-
 	// Router
 	rtr := mux.NewRouter()
 	rtr.HandleFunc("/", golbGet).Methods("GET")
