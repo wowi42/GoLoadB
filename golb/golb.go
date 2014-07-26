@@ -24,9 +24,11 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	var secondResp *http.Response
 	var errsp error
 
-	serv := strings.Split(req.RemoteAddr, ":") // extract just IP without port
-	libgolb.Log("misc", "Access From :"+serv[0])
-	server, errGS := libgolb.RadixGetString(libgolb.LBClient, serv[0])
+	
+	//serv := strings.Split(req.RemoteAddr, ":") // extract just IP without port
+	origin := req.RemoteAddr
+	libgolb.Log("misc", "Access From :"+origin)
+	server, errGS := libgolb.RadixGetString(libgolb.LBClient, origin)
 	if errGS != nil {
 		server = getServer()
 	}
@@ -57,10 +59,10 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Header().Set("Status", "200")
 	io.Copy(w, secondResp.Body)
-	libgolb.RadixSet(libgolb.LBClient, serv[0], server)
-	libgolb.Log("ok", "Answer From :"+serv[0])
+	libgolb.RadixSet(libgolb.LBClient, origin, server)
+	libgolb.Log("ok", "Answer From :"+origin)
 	//TTL
-	libgolb.RadixExpire(libgolb.LBClient, serv[0], strconv.Itoa(libgolb.Conf.TTL))
+	libgolb.RadixExpire(libgolb.LBClient, origin, strconv.Itoa(libgolb.Conf.TTL))
 	libgolb.LogW3C(w, req, false)
 }
 
