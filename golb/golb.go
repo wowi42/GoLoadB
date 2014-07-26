@@ -24,7 +24,6 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	var secondResp *http.Response
 	var errsp error
 
-	defer secondResp.Body.Close()
 	serv := strings.Split(req.RemoteAddr, ":") // extract just IP without port
 	libgolb.Log("misc", "Access From :"+serv[0])
 	server, errGS := libgolb.RadixGetString(libgolb.LBClient, serv[0])
@@ -39,6 +38,7 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 		}
 		resp.Header.Set("X-Forwarded-For", req.RemoteAddr)
 		secondResp, errsp = http.DefaultClient.Do(resp)
+		defer secondResp.Body.Close()
 		if errsp != nil {
 			libgolb.Log("error", "Connection with the HTTP file server failed: "+errsp.Error())
 			server = getServer()
