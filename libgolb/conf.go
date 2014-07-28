@@ -28,9 +28,9 @@ type Configuration struct {
 	Server      HttpServer
 	BackServers []string
 	LogColor    bool
-	TTL         int
-	TimeOut     int
-	IpHashLevel int
+	TTL         uint
+	TimeOut     uint
+	IpHashLevel uint
 	RedisLB     RedisServer
 }
 
