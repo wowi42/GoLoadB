@@ -93,6 +93,8 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	for k, v := range secondResp.Header { // Copy Header
 		w.Header().Add(k, strings.Join(v, ""))
 	}
+	w.Header().Add("Served-By", server)
+	w.Header().Add("Server", libgolb.Conf.Name)	
 	io.Copy(w, secondResp.Body)
 	if redisArg == false {
 		if primaryServer != server {
@@ -104,8 +106,6 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 		}
 		_ = libgolb.RadixExpire(libgolb.LBClient, origin)
 	}
-	w.Header().Set("Served-By", server)
-	w.Header().Set("Server", libgolb.Conf.Name)	
 	libgolb.Log("ok", "Answer From :"+server)
 	libgolb.LogW3C(w, req, false)
 }
