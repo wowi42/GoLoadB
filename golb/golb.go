@@ -114,12 +114,13 @@ func parseArgument(configuration string) {
 	// Load configuration
 	libgolb.ConfLoad(configuration)
 	//Connect to Redis
-	redis := libgolb.ConnectToRedis()
-	if redis != nil {
-		libgolb.Log("error", "Redis connection failed: Server = "+libgolb.Conf.RedisLB.Hostname+":"+libgolb.Conf.RedisLB.Port)
-		os.Exit(1)
+	if redisArg  == true {
+		redis := libgolb.ConnectToRedis()
+		if redis != nil {
+			libgolb.Log("error", "Redis connection failed: Server = "+libgolb.Conf.RedisLB.Hostname+":"+libgolb.Conf.RedisLB.Port)
+			os.Exit(1)
+		}
 	}
-
 	// Router
 	rtr := mux.NewRouter()
 	rtr.HandleFunc("/", golbGet).Methods("GET")
