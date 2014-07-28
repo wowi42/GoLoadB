@@ -7,15 +7,54 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"net"
+	"time"
+	"os"
 )
 
 var origins = map[string]string{} // map of originip/backend
+var redisArg bool
 
-func getServer() (server string) {
-	server = libgolb.Conf.BackServers[libgolb.RoundRobin]
-	libgolb.RoundRobin++
-	if libgolb.RoundRobin >= libgolb.NumberBack {
-		libgolb.RoundRobin = 0
+func GetAndCheckServer() (server string) {
+	limit := 0
+	for limit < libgolb.NumberBack {
+		server = libgolb.Conf.BackServers[libgolb.RoundRobin]
+		connection, err := net.DialTimeout("tcp", server, time.Duration(libgolb.Conf.TimeOut) * time.Second)
+		if err == nil {
+			connection.Close()
+			return
+		}
+		libgolb.RoundRobin++
+		if libgolb.RoundRobin >= libgolb.NumberBack {
+			libgolb.RoundRobin = 0
+		}
+	}
+	return
+}
+
+func extractKey(RemoteAddr string) (key string){
+	if libgolb.Conf.IpHashLevel != 5 {
+		ip := strings.Split(RemoteAddr, ":")
+		octets := strings.Split(ip[0], ".")		
+		key = strings.Join(octets[:libgolb.Conf.IpHashLevel], ".")
+	} else {
+		key = RemoteAddr
+	}
+	return
+	
+}
+
+func GetAddress(origin string) (server string, result bool){
+	var err error
+	if redisArg == true {
+		server, err = libgolb.RadixGetString(libgolb.LBClient, origin)
+		if err != nil {
+			result = false
+		} else {
+			result = true
+		}
+	} else {
+		server, result = origins[origin]
 	}
 	return
 }
@@ -24,27 +63,22 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	var secondResp *http.Response
 	var errsp error
 
-	
-	serv := strings.Split(req.RemoteAddr, ":") // extract just IP without port, it can be a good idea on a limited system !!!
-	//origin := req.RemoteAddr // here is the best solution, but use a lot of memory !!!
-	origin := serv[0]
-	libgolb.Log("misc", "Access From :"+origin)
-	server, errGS := origins[origin]
-	primaryServer := server
+	origin := extractKey(req.RemoteAddr)
+	libgolb.Log("misc", "Access From: "+ req.RemoteAddr + " Key: " +origin)
+	server, errGS := GetAddress(origin) 
 	if errGS == false {
-		server = getServer()
+		server = GetAndCheckServer()
 	}
+	primaryServer := server
 	limit := 0
 	for limit < libgolb.NumberBack { // this for is used to check all servers and select the first one available
 		resp, _ := http.NewRequest(req.Method, "http://"+server+"/", nil)
-		for k, v := range req.Header {
-			resp.Header[k] = v
-		}
+		resp.Header = req.Header
 		resp.Header.Set("X-Forwarded-For", req.RemoteAddr)
 		secondResp, errsp = http.DefaultClient.Do(resp)
 		if errsp != nil {
 			libgolb.Log("error", "Connection with the HTTP file server failed: "+errsp.Error())
-			server = getServer()
+			server = GetAndCheckServer()
 			limit++
 		} else {
 			defer secondResp.Body.Close() // don't forget to close the Body !!!
@@ -59,19 +93,33 @@ func golbGet(w http.ResponseWriter, req *http.Request) {
 	for k, v := range secondResp.Header { // Copy Header
 		w.Header().Add(k, strings.Join(v, ""))
 	}
-	w.Header().Set("Status", "200")
 	io.Copy(w, secondResp.Body)
-	if primaryServer != server {
-		origins[origin] = server
+	if redisArg == false {
+		if primaryServer != server {
+			origins[origin] = server
+		}
+	} else {
+		if primaryServer != server {
+			_ = libgolb.RadixSet(libgolb.LBClient, origin, server)
+		}
+		_ = libgolb.RadixExpire(libgolb.LBClient, origin)
 	}
-	libgolb.Log("ok", "Answer From :"+origin)
+	w.Header().Set("Served-By", server)
+	w.Header().Set("Server", libgolb.Conf.Name)	
+	libgolb.Log("ok", "Answer From :"+server)
 	libgolb.LogW3C(w, req, false)
 }
 
 func parseArgument(configuration string) {
-
 	// Load configuration
 	libgolb.ConfLoad(configuration)
+	//Connect to Redis
+	redis := libgolb.ConnectToRedis()
+	if redis != nil {
+		libgolb.Log("error", "Redis connection failed: Server = "+libgolb.Conf.RedisLB.Hostname+":"+libgolb.Conf.RedisLB.Port)
+		os.Exit(1)
+	}
+
 	// Router
 	rtr := mux.NewRouter()
 	rtr.HandleFunc("/", golbGet).Methods("GET")
@@ -87,7 +135,8 @@ func main() {
 	usage := `Golb.
 
 Usage:
-  golb <configuration>
+  golb memory <configuration>
+  golb redis <configuration>
   golb -h | --help
   golb --version
 
@@ -96,5 +145,10 @@ Options:
   --version     Show version.`
 
 	arguments, _ := docopt.Parse(usage, nil, true, "GoLB 0.1", false)
+	if arguments["redis"] == true {
+		redisArg = true
+	} else {
+		redisArg = false
+	}
 	parseArgument(arguments["<configuration>"].(string))
 }

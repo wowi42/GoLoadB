@@ -11,10 +11,15 @@ type LogFile struct {
 	Folder string
 }
 
-
 type HttpServer struct {
 	Hostname string
 	Port     string
+}
+
+type RedisServer struct {
+	Hostname string
+	Port     string
+	Database int
 }
 
 type Configuration struct {
@@ -23,6 +28,10 @@ type Configuration struct {
 	Server      HttpServer
 	BackServers []string
 	LogColor    bool
+	TTL         int
+	TimeOut     int
+	IpHashLevel int
+	RedisLB     RedisServer
 }
 
 var RoundRobin int
@@ -45,5 +54,9 @@ func ConfLoad(pathconf string) {
 	if NumberBack == 0 {
 		log.Fatal("No Backend Server !!!")
 		os.Exit(1)
+	}
+	if Conf.IpHashLevel < 0 || Conf.IpHashLevel > 5 {
+		log.Fatal("Bad Ip Hash Level !!!")
+		os.Exit(1)	
 	}
 }
